@@ -2,6 +2,9 @@ from flask import Flask,request, jsonify
 
 app = Flask(__name__)
 
+task_list = []
+
+
 @app.route('/')
 def home():
     return 'Task manager api'
@@ -18,12 +21,16 @@ def contact():
 
 @app.route('/tasks', methods=['GET'])
 def tasks():
-    return 'Lista de tarefas'
+    return jsonify(task_list),200
+
 
 @app.route('/tasks/<int:task_id>', methods=['GET'])
 def get_task(task_id):
+    task = task_list[task_id]
     return jsonify({'id':task_id,
+                    'task':task,
                     'message':'Tarefa encontrada com sucesso!'}),200
+
 
 @app.route('/tasks/search', methods=['GET'])
 def search_task():
@@ -38,8 +45,46 @@ def search_task():
 def create_task():
     data = request.json
 
-    title = data.get('title')
-    return jsonify({'message': f'tarefa {title} criada com sucesso!'}),201
+    task = {
+         'id': len(task_list) + 1,
+         'title': data.get('title')
+    }
+
+    task_list.append(task)
+    return jsonify(task),201
+
+
+
+@app.route('/tasks/<int:task_id>', methods=['PUT'])
+def atualizar_task(task_id):
+    data = request.json
+
+    for task in task_list:
+            if task['id'] == task_id:
+                task['title'] = data.get('title', task['title'])
+
+                return jsonify({
+                    'id':task_id,
+                    'task':task,
+                    'message':'tarefa atualizada com sucesso!'
+                })
+
+    return jsonify({'message':'tarefa não encontrada!'}),404
+
+
+
+@app.route('/tasks/<int:task_id>', methods=['DELETE'])
+def deletar_task(task_id):
+
+    for task in task_list:
+       if task['id'] == task_id:
+            task_list.remove(task)
+            return jsonify({
+                'id':task_id,
+                'message':'tarefa deletada com sucesso!'
+            }),200
+
+    return jsonify({'message':'tarefa não encontrada!'}),404 
 
 
 
